@@ -7,16 +7,25 @@ import Filter from './Filter/Filter';
 import PropTypes from 'prop-types';
 
 function App () {
-    const [contacts, setContacts] = useState([]);
+    const [contacts, setContacts] = useState(() => {
+        const contacts = localStorage.getItem('contacts');
+        return JSON.parse(contacts) || [];
+    } );
     const [filter, setFilter] = useState('');
+
+    useEffect(() => {
+        localStorage.setItem('contacts', JSON.stringify(contacts));
+    }, [contacts]);
 
     const formSubmitHandler = dataForm => {
         if (checkUser(dataForm)) {
             return alert(dataForm.name + 'is already is contacts');
         }
 
-        setContacts(prevState => [...prevState, { id: nanoid(), name: dataForm.name, number: dataForm.number }])
-
+        setContacts(prevState => [
+            ...prevState,
+            { id: nanoid(), name: dataForm.name, number: dataForm.number },
+        ]);
     };
 
     const checkUser = data => {
@@ -30,33 +39,17 @@ function App () {
     const filterData = () => {
         const filterNormalized = filter.toLowerCase();
         return contacts.filter(item =>
-            item.name.toLowerCase().includes(filterNormalized),
+            item.name.toLowerCase().includes(filterNormalized)
         );
     };
 
     const deleteContact = id => {
-        setContacts(prevState => [...prevState.filter(item => item.id !== id)])
+        setContacts(prevState => [...prevState.filter(item => item.id !== id)]);
     };
-
-    useEffect(() => {
-        const contacts = localStorage.getItem('contacts');
-        const parsedContacts = JSON.parse(contacts);
-        console.log('parsedContacts', parsedContacts);
-        if (parsedContacts) {
-            setContacts(parsedContacts)
-        }
-    }, []);
-
-    useEffect(() => {
-        console.log(contacts);
-        if(contacts.length){
-            localStorage.setItem('contacts', JSON.stringify(contacts));
-        }
-    }, [contacts]);
 
     return (
         <div
-            style={ {
+            style={{
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'center',
@@ -64,16 +57,13 @@ function App () {
                 fontSize: 40,
                 color: '#010101',
                 padding: 200,
-            } }
+            }}
         >
-            <Title title='Phonebook' />
-            <ContactForm onSubmit={ formSubmitHandler } />
-            <Title title='Contacts' />
-            <Filter onChange={ handlerFilter } value={ filter } />
-            <ContactList
-                listItems={ filterData() }
-                onDelete={ deleteContact }
-            />
+            <Title title="Phonebook" />
+            <ContactForm onSubmit={formSubmitHandler} />
+            <Title title="Contacts" />
+            <Filter onChange={handlerFilter} value={filter} />
+            <ContactList listItems={filterData()} onDelete={deleteContact} />
         </div>
     );
 }
